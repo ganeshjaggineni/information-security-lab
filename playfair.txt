@@ -1,0 +1,61 @@
+def prepare_input(text):
+    # Convert to uppercase and remove non-alphabetic characters
+    text = "".join(filter(str.isalpha, text.upper()))
+    # Replace 'J' with 'I'
+    text = text.replace("J", "I")
+    return text
+
+def generate_key_table(key):
+    # Convert the key to uppercase
+    key = key.upper()
+    # Remove non-alphabetic characters and 'J'
+    key = "".join(filter(str.isalpha, key)).replace("J", "I")
+    # Initialize the key table with the unique characters from the key
+    key_table = []
+    for char in key:
+        if char not in key_table:
+            key_table.append(char)
+    # Fill the rest of the table with the remaining alphabet characters
+    for char in range(65, 91):  # ASCII values for A-Z
+        if chr(char) not in key_table:
+            key_table.append(chr(char))
+    # Reshape the list into a 5x5 grid
+    key_table = [key_table[i:i+5] for i in range(0, 25, 5)]
+    return key_table
+
+def find_position(key_table, letter):
+    for i in range(5):
+        for j in range(5):
+            if key_table[i][j] == letter:
+                return i, j
+
+def encrypt(message, key):
+    # Prepare the input (convert to uppercase, remove non-alphabetic characters)
+    message = prepare_input(message)
+    # Generate the key table
+    key_table = generate_key_table(key)
+    # Replace repeating characters with 'X' and add 'X' if the message length is odd
+    message = [message[i] + ("X" if message[i] == message[i+1] else "") for i in range(0, len(message), 2)]
+    if len(message[-1]) % 2 != 0:
+        message[-1] += "X"
+    # Encrypt each digraph
+    encrypted_message = ""
+    for digraph in message:
+        row1, col1 = find_position(key_table, digraph[0])
+        row2, col2 = find_position(key_table, digraph[1])
+        # Case 1: Letters are in the same row
+        if row1 == row2:
+            encrypted_message += key_table[row1][(col1 + 1) % 5] + key_table[row2][(col2 + 1) % 5]
+        # Case 2: Letters are in the same column
+        elif col1 == col2:
+            encrypted_message += key_table[(row1 + 1) % 5][col1] + key_table[(row2 + 1) % 5][col2]
+        # Case 3: Letters form a rectangle
+        else:
+            encrypted_message += key_table[row1][col2] + key_table[row2][col1]
+    return encrypted_message
+
+# Example usage:
+plaintext = "HELLO WORLD"
+key = "PLAYFAIR"
+encrypted_text = encrypt(plaintext, key)
+print("Encrypted:", encrypted_text)
